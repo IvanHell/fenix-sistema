@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fenix (sistema de busqueda de especificaciones) </title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐦‍🔥</text></svg>">
+    <style>
+        :root {
+            --primary-color: #f49f3e;
+            --secondary-color: #3498db;
+            --accent-color: #e74c3c;
+            --light-color: #ecf0f1;
+            --dark-color: #34495e;
+            --success-color: #2ecc71;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header { 
+            background: linear-gradient(160deg, rgb(216, 143, 8) 40%, rgb(26, 25, 25) 60%);
+            border-radius: 0px 0px 20px 20px;
+            color: white;
+            padding: 10px 0;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        header h1 {
+            text-align: center;
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+        
+        .search-section {
+            background-color: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            margin-bottom: 30px;
+        }
+        
+        .search-section h2 {
+            margin-bottom: 20px;
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--light-color);
+            padding-bottom: 10px;
+        }
+        
+        .search-form {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .form-group label {
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: var(--dark-color);
+        }
+        
+        .form-group input {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+        }
+        
+        .search-buttons {
+            grid-column: 1 / -1;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #2980b9;
+        }
+        
+        .btn-secondary {
+            background-color: var(--light-color);
+            color: var(--dark-color);
+        }
+        
+        .btn-secondary:hover {
+            background-color: #bdc3c7;
+        }
+        
+        .results-section {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            overflow: hidden;
+            margin-bottom: 30px;
+        }
+        
+        .results-header {
+            padding: 15px 20px;
+            background-color: var(--primary-color);
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .results-count {
+            font-weight: 600;
+        }
+        
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .results-table th {
+            background-color: var(--light-color);
+            padding: 12px 15px;
+            text-align: left;
+            font-weight: 600;
+            color: var(--dark-color);
+        }
+        
+        .results-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .results-table tr:hover {
+            background-color: #f9f9f9;
+        }
+        
+        .document-btn {
+            background-color: var(--secondary-color);
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+        
+        .document-btn:hover {
+            background-color: #2980b9;
+        }
+
+        /* Estilos para el tooltip del ECT */
+        .ect-tooltip {
+            position: relative;
+            cursor: pointer;
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 3px;
+            transition: background-color 0.2s;
+        }
+        
+        .ect-tooltip:hover {
+            background-color: rgba(52, 152, 219, 0.1);
+        }
+        
+        .ect-tooltip:hover::after {
+            content: attr(data-corrugado);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: var(--dark-color);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            white-space: nowrap;
+            z-index: 1000;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        
+        .ect-tooltip:hover::before {
+            content: '';
+            position: absolute;
+            bottom: calc(100% - 5px);
+            left: 50%;
+            transform: translateX(-50%);
+            border: 5px solid transparent;
+            border-top-color: var(--dark-color);
+            z-index: 1000;
+        }
+        
+        .product-detail {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            padding: 25px;
+            display: none;
+        }
+        
+        .product-detail.active {
+            display: block;
+        }
+        
+        .detail-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--light-color);
+        }
+        
+        .detail-title {
+            color: var(--primary-color);
+            font-size: 1.5rem;
+        }
+        
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--dark-color);
+            cursor: pointer;
+        }
+        
+        .detail-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        
+        .detail-item {
+            margin-bottom: 15px;
+        }
+        
+        .detail-label {
+            font-weight: 600;
+            color: var(--dark-color);
+            margin-bottom: 5px;
+        }
+        
+        .detail-value {
+            padding: 8px 0;
+        }
+        
+        .drive-link {
+            display: inline-block;
+            background-color: var(--secondary-color);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 4px;
+            text-decoration: none;
+            margin-top: 5px;
+            transition: background-color 0.3s;
+        }
+        
+        .drive-link:hover {
+            background-color: #2980b9;
+        }
+
+        footer {
+            grid-column: 1 / -1;
+            text-align: center;
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px solid var(--light-color);
+            color: var(--dark-color);
+            font-size: 0.9rem;
+        }
+        
+        @media (max-width: 768px) {
+            .search-form {
+                grid-template-columns: 1fr;
+            }
+            
+            .detail-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .results-table {
+                display: block;
+                overflow-x: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>Búsqueda de Especificaciones 🐦‍🔥</h1>
+        </div>
+    </header>
+    
+    <main class="container">
+        <section class="search-section">
+            <h2>Búsqueda de Productos</h2>
+            <form class="search-form" id="searchForm">
+                <div class="form-group">
+                    <label for="cliente">Cliente</label>
+                    <input type="text" id="cliente" name="cliente">
+                </div>
+                
+                <div class="form-group">
+                    <label for="numeroParte">Número de Parte</label>
+                    <input type="text" id="numeroParte" name="numeroParte">
+                </div>
+                
+                <div class="form-group">
+                    <label for="nombre">Nombre</label>
+                    <input type="text" id="nombre" name="nombre">
+                </div>
+                
+                <div class="form-group">
+                    <label for="proyecto">Proyecto</label>
+                    <input type="text" id="proyecto" name="proyecto">
+                </div>
+                
+                <div class="form-group">
+                    <label for="ect">ECT (Residencia)</label> <!--ECT-->
+                    <input type="text" id="ect" name="ect">
+                </div>
+                
+                <div class="form-group">
+                    <label for="largo">Largo (cm)</label>
+                    <input type="number" id="largo" name="largo" min="0" step="0.1">
+                </div>
+                
+                <div class="form-group">
+                    <label for="ancho">Ancho (cm)</label>
+                    <input type="number" id="ancho" name="ancho" min="0" step="0.1">
+                </div>
+                
+                <div class="form-group">
+                    <label for="alto">Alto (cm)</label>
+                    <input type="number" id="alto" name="alto" min="0" step="0.1">
+                </div>
+                
+                <div class="search-buttons">
+                    <button type="button" class="btn btn-secondary" id="resetBtn">Limpiar</button>
+                    <button type="submit" class="btn btn-primary">Buscar</button>
+                </div>
+
+                <footer> <!--C R E A D O R-->
+                    <p>By: Ing. Carlos Ivan Chavez Lopez &copy; 2025</p>
+                </footer>
+            </form>
+        </section>
+        
+        <section class="results-section" id="resultsSection" style="display: none;">
+            <div class="results-header">
+                <h3>Resultados de Búsqueda</h3>
+                <div class="results-count" id="resultsCount">0 productos encontrados</div>
+            </div>
+            
+            <!--Aqui colocamos los resultados de la busqueda este cambio solo seria por nombre y organizacion 
+            no influye en los filtros de la busqueda-->
+
+            <div class="table-container">
+                <table class="results-table">
+                    <thead>
+                        <tr>
+                            <th>Cliente</th>
+                            <th>Número de Parte</th>
+                            <th>Nombre</th>
+                            <th>Proyecto</th>
+                            <th>Largo</th>
+                            <th>Ancho</th>
+                            <th>Alto</th>
+                            <th>Residencia</th> <!--ECT-->
+                            <th>Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody id="resultsBody">
+                        <!-- Los resultados se cargarán aquí dinámicamente -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <script>
+    // Elementos del DOOM
+    const searchForm = document.getElementById('searchForm');
+    const resetBtn = document.getElementById('resetBtn');
+    const resultsSection = document.getElementById('resultsSection');
+    const resultsBody = document.getElementById('resultsBody');
+    const resultsCount = document.getElementById('resultsCount');
+
+    // Función para realizar la búsqueda
+    async function realizarBusqueda(event) {
+        event.preventDefault();
+        
+        // Obtener valores de los filtros
+        const filtros = {
+            cliente: document.getElementById('cliente').value,
+            numeroParte: document.getElementById('numeroParte').value,
+            nombre: document.getElementById('nombre').value,
+            proyecto: document.getElementById('proyecto').value,
+            ect: document.getElementById('ect').value,
+            largo: document.getElementById('largo').value,
+            ancho: document.getElementById('ancho').value,
+            alto: document.getElementById('alto').value
+        };
+
+        try {
+            // Mostrar loading
+            resultsBody.innerHTML = '<tr><td colspan="9" style="text-align: center;">Buscando...</td></tr>';
+            resultsSection.style.display = 'block';
+            
+            const response = await fetch('/api/buscar', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(filtros)
+            });
+            
+            if (!response.ok) {
+                throw new Error('Error en la respuesta del servidor');
+            }
+            
+            const resultados = await response.json();
+            mostrarResultados(resultados);
+            
+        } catch (error) {
+            console.error('Error en la búsqueda:', error);
+            resultsBody.innerHTML = '<tr><td colspan="9" style="text-align: center; color: red;">Error al conectar con el servidor</td></tr>';
+            resultsCount.textContent='ERROR DE CONEXION';
+        }
+        
+        // Hacer scroll hacia los resultados
+        setTimeout(() => {
+            resultsSection.scrollIntoView({ 
+                behavior: 'smooth',
+                block: 'start'
+            });
+        }, 300);
+    }
+
+    // Función para mostrar los resultados en la tabla
+    function mostrarResultados(resultados) {
+        resultsBody.innerHTML = '';
+        
+        if (resultados.length === 0) {
+            resultsBody.innerHTML = '<tr><td colspan="9" style="text-align: center;">No se encontraron productos</td></tr>';
+            resultsSection.style.display = 'block';
+            resultsCount.textContent = '0 productos encontrados';
+            return;
+        }
+        
+        resultados.forEach(producto => { 
+            const fila = document.createElement('tr');
+            fila.innerHTML = `
+                <td>${producto.cliente}</td>
+                <td>${producto.numeroParte}</td>
+                <td>${producto.nombre}</td>
+                <td>${producto.proyecto}</td>
+                <td>${producto.largo} cm</td>
+                <td>${producto.ancho} cm</td>
+                <td>${producto.alto} cm</td>
+                <td>
+                    <span class="ect-tooltip" data-corrugado="Corrugado: ${producto.corrugado}">
+                        ${producto.ect}
+                    </span>
+                </td>
+                <td><a href="${producto.documento}" class="document-btn" target="_blank">Ver Documento</a></td>
+            `;
+            resultsBody.appendChild(fila);
+        });
+        
+        resultsCount.textContent = `${resultados.length} producto(s) encontrado(s)`;
+        resultsSection.style.display = 'block';
+    }
+
+    // Función para limpiar el formulario
+    function limpiarFormulario() {
+        searchForm.reset();
+        resultsSection.style.display = 'none';
+    }
+
+    // Event Listeners
+    searchForm.addEventListener('submit', realizarBusqueda);
+    resetBtn.addEventListener('click', limpiarFormulario);
+
+    console.log('FENIX 2.0 - Conectado al backend');
+</script>
+</body>
+</html>
