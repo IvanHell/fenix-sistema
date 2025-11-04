@@ -12,7 +12,7 @@ const dbConfig = {
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0,
-    reconnect: true
+    reconnect: true,
 
     ssl: { rejectUnauthorized: false } //cada foro dice que es importante
 };
