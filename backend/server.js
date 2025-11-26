@@ -19,7 +19,7 @@ app.get('/', (req, res) => {
 // Ruta para búsqueda con MySQL
 app.post('/api/buscar', async (req, res) => {
     console.log('🔍 Búsqueda recibida en /api/buscar');
-    
+    console.log('📦 body recibido:', req.body);
     const { cliente, numeroParte, nombre, proyecto, ect, largo, ancho, alto } = req.body;
     
     try {
