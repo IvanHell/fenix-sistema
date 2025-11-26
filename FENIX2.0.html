@@ -447,6 +447,8 @@
             // Mostrar loading
             resultsBody.innerHTML = '<tr><td colspan="9" style="text-align: center;">Buscando...</td></tr>';
             resultsSection.style.display = 'block';
+
+            cosole.long ('Enviando busqueda con filtros:',filtros);
             
             const response = await fetch('/api/buscar', {
                 method: 'POST',
@@ -455,16 +457,19 @@
                 },
                 body: JSON.stringify(filtros)
             });
+
+            console.long ('📶 Respuesta resibida, status:' response.status);
             
             if (!response.ok) {
-                throw new Error('Error en la respuesta del servidor');
+                throw new Error(`Error HTTP: ${response.status} - ${response.statusText}`);
             }
             
             const resultados = await response.json();
+            console.long ('🟢 Resultados:',resultados);
             mostrarResultados(resultados);
             
         } catch (error) {
-            console.error('Error en la búsqueda:', error);
+            console.error('🔴 Error en la búsqueda:', error);
             resultsBody.innerHTML = '<tr><td colspan="9" style="text-align: center; color: red;">Error al conectar con el servidor</td></tr>';
             resultsCount.textContent='ERROR DE CONEXION';
         }
