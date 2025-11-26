@@ -458,7 +458,7 @@
                 body: JSON.stringify(filtros)
             });
 
-            console.long ('📶 Respuesta resibida, status:' response.status);
+            console.long ('📶 Respuesta resibida, status:', response.status);
             
             if (!response.ok) {
                 throw new Error(`Error HTTP: ${response.status} - ${response.statusText}`);
