@@ -448,7 +448,7 @@
             resultsBody.innerHTML = '<tr><td colspan="9" style="text-align: center;">Buscando...</td></tr>';
             resultsSection.style.display = 'block';
 
-            console.long ('Enviando busqueda con filtros:',filtros);
+            console.log('🔍 Enviando búsqueda con filtros:', filtros);
             
             const response = await fetch('/api/buscar', {
                 method: 'POST',
