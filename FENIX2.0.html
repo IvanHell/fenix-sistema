@@ -469,7 +469,7 @@
             mostrarResultados(resultados);
             
         } catch (error) {
-            console.error('❌ Error en la búsqueda:', error);
+            console.error('🔴 Error en la búsqueda:', error);
             resultsBody.innerHTML = '<tr><td colspan="9" style="text-align: center; color: red;">Error al conectar con el servidor</td></tr>';
             resultsCount.textContent='ERROR DE CONEXION';
         }
