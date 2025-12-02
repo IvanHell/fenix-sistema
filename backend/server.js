@@ -4,14 +4,14 @@ const path = require('path');
 const db = require('./database');
 
 const app = express();
-const PORT = process.env.PORT || 3001; //cambio de 3000 a 3001
+const PORT = process.env.PORT || 3001; 
 
 // Middleware
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '..')));
 
-// Ruta principal - sirve tu HTML
+// Ruta principal 
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, '../FENIX2.0.html'));
 });
@@ -114,17 +114,18 @@ app.get('/api/productos', async (req, res) => {
 // Ruta de salud del servidor y BD
 app.get('/api/health', async (req, res) => {
     try {
-        const [result] = await db.execute('SELECT 1 as healthy');
+        const [[{ total }]] = await db.execute('SELECT COUNT(*) as total FROM productos');
         
-        res.json({ 
-            status: 'OK', 
+        res.json({
+            status: 'OK',
             message: '🐦‍🔥 FENIX backend y BD funcionando',
             database: 'Connected ✅',
             timestamp: new Date().toISOString(),
             details: {
                 backend: 'Node.js + Express',
-                database: 'MySQL',
-                products_count: '4 registros'
+                database: 'MySQL Aiven',
+                products_count: `${total} registros`,
+                uptime: `${Math.floor(process.uptime())}s`
             }
         });
     } catch (error) {
@@ -253,3 +254,4 @@ app.listen(PORT, () => {
     console.log(`🔍 Ruta de salud: http://localhost:${PORT}/api/health`);
     console.log(`👨‍💼 Panel admin: http://localhost:${PORT}/admin`);
 });
+
