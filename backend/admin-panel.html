@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Administración - FENIX</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐦‍🔥</text></svg>">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background: #f5f7fa; padding: 20px; }
+        .container { max-width: 1400px; margin: 0 auto; }
+        
+        .header { 
+            background: linear-gradient(160deg, #f49f3e 40%, #34495e 60%);
+            color: white; padding: 20px; border-radius: 10px; margin-bottom: 20px;
+        }
+        
+        .tabs { display: flex; gap: 10px; margin-bottom: 20px; }
+        .tab { padding: 10px 20px; background: #3498db; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        .tab.active { background: #2980b9; }
+        
+        .panel { display: none; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .panel.active { display: block; }
+        
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: 600; color: #34495e; }
+        .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
+        
+        .btn { padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-weight: 600; }
+        .btn-primary { background: #3498db; color: white; }
+        .btn-danger { background: #e74c3c; color: white; }
+        .btn-success { background: #2ecc71; color: white; }
+        .btn-secondary { background: #877de1; color: white; }
+        .btn-info { background: #17a2b8; color: white; }
+        
+        .table-container { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
+        th { background: #34495e; color: white; }
+        tr:hover { background: #f9f9f9; }
+        
+        .pagination { display: flex; gap: 10px; margin-top: 20px; justify-content: center; }
+        .page-btn { padding: 8px 15px; border: 1px solid #3498db; background: white; cursor: pointer; }
+        .page-btn.active { background: #3498db; color: white; }
+
+        .search-filters { background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #e9ecef; }
+        .search-actions { display: flex; gap: 10px; margin-top: 10px; }
+        
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🐦‍🔥 Panel de Administración - FENIX</h1>
+            <p>Gestiona tu base de datos de productos</p>
+        </div>
+        
+        <div class="tabs">
+            <button class="tab active" onclick="showPanel('ver')">Ver Productos</button>
+            <button class="tab" onclick="showPanel('agregar')">Agregar Producto</button>
+            <!-- Eliminamos la pestaña "Buscar y Editar" -->
+        </div>
+        
+        <!-- Panel: Ver Productos (CON FILTROS) -->
+        <div id="ver" class="panel active">
+            <h2>Lista de Productos</h2>
+            
+            <!-- Filtros de búsqueda integrados -->
+            <div class="search-filters">
+                <h3 style="margin-bottom: 15px; color: #34495e;">🔍 Buscar Productos</h3>
+                <div class="grid-3">
+                    <div class="form-group">
+                        <label>Cliente</label>
+                        <input type="text" id="filtroCliente" placeholder="Ej: Daimay, Toyota...">
+                    </div>
+                    <div class="form-group">
+                        <label>Número de Parte</label>
+                        <input type="text" id="filtroNumeroParte" placeholder="Ej: ABC-123...">
+                    </div>
+                    <div class="form-group">
+                        <label>Proyecto</label>
+                        <input type="text" id="filtroProyecto" placeholder="Ej: Proyecto X...">
+                    </div>
+                </div>
+                <div class="search-actions">
+                    <button class="btn btn-primary" onclick="realizarBusqueda()">
+                        🔍 Buscar Productos
+                    </button>
+                    <button class="btn btn-secondary" onclick="limpiarFiltros()">
+                        🧹 Limpiar Filtros
+                    </button>
+                    <button class="btn btn-info" onclick="cargarProductos(1)">
+                        📋 Ver Todos
+                    </button>
+                </div>
+            </div>
+
+            <div class="table-container">
+                <table id="tablaProductos">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Cliente</th>
+                            <th>N° Parte</th>
+                            <th>Nombre</th>
+                            <th>Medidas</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cuerpoTabla"></tbody>
+                </table>
+            </div>
+            <div class="pagination" id="pagination"></div>
+        </div>
+        
+        <!-- Panel: Agregar Producto -->
+        <div id="agregar" class="panel">
+            <h2>Agregar Nuevo Producto</h2>
+            <form id="formAgregar" class="grid-2">
+                <div class="form-group">
+                    <label>Folio *</label>
+                    <input type="text" name="folio" required>
+                </div>
+                <div class="form-group">
+                    <label>Cliente *</label>
+                    <input type="text" name="cliente" required>
+                </div>
+                <div class="form-group">
+                    <label>Número de Parte *</label>
+                    <input type="text" name="numero_parte" required>
+                </div>
+                <div class="form-group">
+                    <label>Nombre *</label>
+                    <input type="text" name="nombre" required>
+                </div>
+                <div class="form-group">
+                    <label>Proyecto</label>
+                    <input type="text" name="proyecto">
+                </div>
+                <div class="form-group">
+                    <label>Largo (cm)</label>
+                    <input type="number" step="0.1" name="largo">
+                </div>
+                <div class="form-group">
+                    <label>Ancho (cm)</label>
+                    <input type="number" step="0.1" name="ancho">
+                </div>
+                <div class="form-group">
+                    <label>Alto (cm)</label>
+                    <input type="number" step="0.1" name="alto">
+                </div>
+                <div class="form-group">
+                    <label>ECT</label>
+                    <input type="text" name="ect" value="ECT-32">
+                </div>
+                <div class="form-group">
+                <label>Corrugado</label>
+                <input type="text" name="corrugado" value="SENCILLO" placeholder="Ej: SENCILLO, DOBLE, TRIPLE, MICRO">
+                </div>
+                <div class="form-group">
+                    <label>Código</label>
+                    <input type="text" name="codigo">
+                </div>
+                <div class="form-group" style="grid-column: 1 / -1;">
+                    <label>Documento (URL Google Drive)</label>
+                    <input type="text" name="documento" style="width: 100%;">
+                </div>
+                <div class="form-group" style="grid-column: 1 / -1;">
+                    <button type="submit" class="btn btn-success">Agregar Producto</button>
+                </div>
+            </form>
+        </div>
+    </div> 
+
+    <script>
+        let currentPage = 1;
+        const limit = 50;
+        let modoBusqueda = false; // Para saber si estamos en búsqueda o vista normal
+
+        // Funciones de navegación
+        function showPanel(panelId) {
+            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.getElementById(panelId).classList.add('active');
+            document.querySelector(`[onclick="showPanel('${panelId}')"]`).classList.add('active');
+            
+            if (panelId === 'ver' && !modoBusqueda) {
+                cargarProductos();
+            }
+        }
+
+        // Cargar productos
+        async function cargarProductos(page = 1) {
+            try {
+                modoBusqueda = false;
+                console.log('📦 Cargando productos, página:', page);
+                const response = await fetch(`/api/admin/productos?page=${page}&limit=${limit}`);
+                
+                if (!response.ok) {
+                    throw new Error(`Error HTTP: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                console.log('✅ Productos cargados:', data);
+                
+                mostrarProductosEnTabla(data.productos);
+                
+                // Paginación
+                if (data.pagination) {
+                    mostrarPaginacion(data.pagination);
+                }
+                currentPage = page;
+                
+            } catch (error) {
+                console.error('❌ Error cargando productos:', error);
+                const tbody = document.getElementById('cuerpoTabla');
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: red;">Error al cargar productos</td></tr>';
+            }
+        }
+       
+
+       
+        function mostrarProductosEnTabla(productos) {
+            const tbody = document.getElementById('cuerpoTabla');
+            tbody.innerHTML = '';
+            
+            if (!productos || productos.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">No hay productos</td></tr>';
+                return;
+            }
+            
+            productos.forEach(producto => {
+                console.log('🔍 Procesando producto:', producto);
+                
+                // EXTRAER DATOS CON LOS NOMBRES CORRECTOS DE BÚSQUEDA
+                const id = producto.id || 'N/A'; // Los resultados de búsqueda no tienen ID
+                const cliente = producto.cliente || 'N/A';
+                const numero_parte = producto.numeroParte || producto.numero_parte || 'N/A';
+                const nombre = producto.nombre || 'N/A';
+                const largo = producto.largo || '0';
+                const ancho = producto.ancho || '0';
+                const alto = producto.alto || '0';
+                const folio = producto.folio || 'N/A';
+                
+                // Para productos de búsqueda (sin ID), mostramos el folio
+                const identificador = id !== 'N/A' ? id : folio;
+                
+                // Determinar si es un producto editable (con ID) o de búsqueda (sin ID)
+                const esEditable = id !== 'N/A' && !isNaN(id);
+
+                        // 🔍 FUNCIONES PARA PRODUCTOS DE BÚSQUEDA (sin ID)
+
+        // Buscar producto por folio para editar
+        async function buscarYEditarPorFolio(folio, cliente, numeroParte) {
+            console.log('🔍 Buscando producto para editar - Folio:', folio, 'Cliente:', cliente);
+            
+            try {
+                // Buscar el producto en la lista completa para obtener su ID
+                const response = await fetch(`/api/admin/productos?limit=1000`);
+                if (!response.ok) throw new Error('Error al cargar productos');
+                
+                const data = await response.json();
+                const productoEncontrado = data.productos.find(p => 
+                    p.folio === folio && 
+                    p.cliente === cliente && 
+                    (p.numero_parte === numeroParte || p.numeroParte === numeroParte)
+                );
+                
+                if (productoEncontrado && productoEncontrado.id) {
+                    console.log('✅ Producto encontrado con ID:', productoEncontrado.id);
+                    editarProducto(productoEncontrado.id);
+                } else {
+                    alert('No se pudo encontrar el producto completo. Por favor, búsquelo en la lista principal.');
+                }
+                
+            } catch (error) {
+                console.error('❌ Error buscando producto:', error);
+                alert('Error al buscar el producto. Por favor, búsquelo en la lista principal.');
+            }
+        }
+
+        // Buscar producto por folio para eliminar
+        async function buscarYEliminarPorFolio(folio, cliente, numeroParte) {
+            console.log('🔍 Buscando producto para eliminar - Folio:', folio);
+            
+            try {
+                // Buscar el producto en la lista completa para obtener su ID
+                const response = await fetch(`/api/admin/productos?limit=1000`);
+                if (!response.ok) throw new Error('Error al cargar productos');
+                
+                const data = await response.json();
+                const productoEncontrado = data.productos.find(p => 
+                    p.folio === folio && 
+                    p.cliente === cliente && 
+                    (p.numero_parte === numeroParte || p.numeroParte === numeroParte)
+                );
+                
+                if (productoEncontrado && productoEncontrado.id) {
+                    console.log('✅ Producto encontrado con ID:', productoEncontrado.id);
+                    eliminarProducto(productoEncontrado.id);
+                } else {
+                    alert('No se pudo encontrar el producto completo. Por favor, búsquelo en la lista principal.');
+                }
+                
+            } catch (error) {
+                console.error('❌ Error buscando producto:', error);
+                alert('Error al buscar el producto. Por favor, búsquelo en la lista principal.');
+            }
+        }
+                
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${identificador}</td>
+                    <td>${cliente}</td>
+                    <td>${numero_parte}</td>
+                    <td>${nombre}</td>
+                    <td>${largo} x ${ancho} x ${alto} cm</td>
+                    <td>
+                        ${esEditable ? `
+                            <!-- Botones para productos EDITABLES (con ID) -->
+                            <button class="btn btn-primary" onclick="editarProducto(${id})">Editar</button>
+                            <button class="btn btn-danger" onclick="eliminarProducto(${id})">Eliminar</button>
+                        ` : `
+                            <!-- Botones para productos de BÚSQUEDA (sin ID) -->
+                            <button class="btn btn-primary" onclick="buscarYEditarPorFolio('${folio}', '${cliente}', '${numero_parte}')">Buscar para Editar</button>
+                            <button class="btn btn-danger" onclick="buscarYEliminarPorFolio('${folio}', '${cliente}', '${numero_parte}')">Buscar para Eliminar</button>
+                        `}
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+
+
+        function mostrarPaginacion(pagination) {
+            const paginationDiv = document.getElementById('pagination');
+            paginationDiv.innerHTML = '';
+            
+            for (let i = 1; i <= pagination.totalPages; i++) {
+                const btn = document.createElement('button');
+                btn.className = `page-btn ${i === currentPage ? 'active' : ''}`;
+                btn.textContent = i;
+                btn.onclick = () => cargarProductos(i);
+                paginationDiv.appendChild(btn);
+            }
+        }
+
+
+
+        // BÚSQUEDA MEJORADA
+        async function realizarBusqueda() {
+            const filtros = {
+                cliente: document.getElementById('filtroCliente').value.trim(),
+                numero_parte: document.getElementById('filtroNumeroParte').value.trim(),
+                proyecto: document.getElementById('filtroProyecto').value.trim()
+            };
+            
+            // Verificar que al menos un filtro tenga contenido
+            const hayFiltros = Object.values(filtros).some(valor => valor.length > 0);
+            
+            if (!hayFiltros) {
+                alert('Por favor ingrese al menos un criterio de búsqueda');
+                return;
+            }
+            
+            modoBusqueda = true;
+            document.getElementById('cuerpoTabla').innerHTML = '<tr><td colspan="6" style="text-align: center;">Buscando...</td></tr>';
+            
+            try {
+                console.log('🔍 Enviando búsqueda:', filtros);
+                const response = await fetch('/api/buscar', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(filtros)
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Error HTTP: ${response.status}`);
+                }
+                
+                const productos = await response.json();
+                console.log('✅ Resultados búsqueda:', productos);
+                
+                // Ocultar paginación en búsqueda
+                document.getElementById('pagination').innerHTML = '';
+                
+                // Mostrar resultados en la tabla
+                mostrarProductosEnTabla(productos);
+                
+            } catch (error) {
+                console.error('❌ Error en búsqueda:', error);
+                document.getElementById('cuerpoTabla').innerHTML = '<tr><td colspan="6" style="text-align: center; color: red;">Error al realizar la búsqueda</td></tr>';
+            }
+        }
+
+
+
+        // Buscar al presionar Enter
+        document.getElementById('filtroCliente').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') realizarBusqueda();
+        });
+        
+        document.getElementById('filtroNumeroParte').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') realizarBusqueda();
+        });
+        
+        document.getElementById('filtroProyecto').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') realizarBusqueda();
+        });
+
+        function limpiarFiltros() {
+            document.getElementById('filtroCliente').value = '';
+            document.getElementById('filtroNumeroParte').value = '';
+            document.getElementById('filtroProyecto').value = '';
+            modoBusqueda = false;
+            cargarProductos(1);
+        }
+
+        // ... (el resto de las funciones se mantienen igual: agregar producto, editar, eliminar, etc.) ...
+
+        // Agregar producto
+        document.getElementById('formAgregar').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData);
+            
+            // Validación básica
+            if (!data.folio || !data.cliente || !data.numero_parte || !data.nombre) {
+                alert('Por favor complete los campos obligatorios (*)');
+                return;
+            }
+            
+            try {
+                console.log('➕ Enviando producto:', data);
+                const response = await fetch('/api/admin/productos', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                alert(result.message);
+                e.target.reset();
+                cargarProductos();
+                
+            } catch (error) {
+                console.error('❌ Error agregando producto:', error);
+                alert('Error al agregar producto');
+            }
+        });
+
+        // Eliminar producto
+        async function eliminarProducto(id) {
+            if (!confirm('¿Estás seguro de eliminar este producto?')) return;
+            
+            try {
+                console.log('🗑️ Eliminando producto ID:', id);
+                const response = await fetch(`/api/admin/productos/${id}`, {
+                    method: 'DELETE'
+                });
+                
+                const result = await response.json();
+                alert(result.message);
+                cargarProductos(currentPage);
+                
+            } catch (error) {
+                console.error('❌ Error eliminando producto:', error);
+                alert('Error al eliminar producto');
+            }
+        }
+
+        // Cargar productos al iniciar
+        cargarProductos();
+
+        // ✅ FUNCIÓN EDITAR PRODUCTO
+        async function editarProducto(id) {
+            console.log('✏️ Solicitando edición del producto ID:', id);
+            
+            if (!id || isNaN(parseInt(id))) {
+                alert('Error: ID del producto no válido');
+                return;
+            }
+            
+            id = parseInt(id);
+            
+            try {
+                const response = await fetch(`/api/admin/productos/${id}`);
+                
+                if (!response.ok) {
+                    throw new Error(`Error HTTP: ${response.status}`);
+                }
+                
+                const producto = await response.json();
+                
+                // Crear modal de edición (el mismo que teníamos)
+                const modalHTML = `
+                    <div id="modalEditar" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 1000;">
+                        <div style="background: white; padding: 30px; border-radius: 10px; width: 90%; max-width: 800px; max-height: 90vh; overflow-y: auto;">
+                            <h2>Editar Producto ID: ${producto.id}</h2>
+                            <form id="formEditar" class="grid-2">
+                                <!-- Todos los campos del formulario igual -->
+                                <div class="form-group"><label>Folio *</label><input type="text" name="folio" value="${producto.folio || ''}" required></div>
+                                <div class="form-group"><label>Cliente *</label><input type="text" name="cliente" value="${producto.cliente || ''}" required></div>
+                                <div class="form-group"><label>Número de Parte *</label><input type="text" name="numero_parte" value="${producto.numero_parte || ''}" required></div>
+                                <div class="form-group"><label>Nombre *</label><input type="text" name="nombre" value="${producto.nombre || ''}" required></div>
+                                <div class="form-group"><label>Proyecto</label><input type="text" name="proyecto" value="${producto.proyecto || ''}"></div>
+                                <div class="form-group"><label>Largo (cm)</label><input type="number" step="0.1" name="largo" value="${producto.largo || ''}"></div>
+                                <div class="form-group"><label>Ancho (cm)</label><input type="number" step="0.1" name="ancho" value="${producto.ancho || ''}"></div>
+                                <div class="form-group"><label>Alto (cm)</label><input type="number" step="0.1" name="alto" value="${producto.alto || ''}"></div>
+                                <div class="form-group"><label>ECT</label><input type="text" name="ect" value="${producto.ect || 'ECT-32'}"></div>
+                                <div class="form-group"><label>Corrugado</label><input type="text" name="corrugado" value="${producto.corrugado || 'SENCILLO'}"></div>
+                                <div class="form-group"><label>Código</label><input type="text" name="codigo" value="${producto.codigo || ''}"></div>
+                                <div class="form-group" style="grid-column: 1 / -1;"><label>Documento (URL Google Drive)</label><input type="text" name="documento" value="${producto.documento || ''}" style="width: 100%;"></div>
+                                <div class="form-group" style="grid-column: 1 / -1; display: flex; gap: 10px; justify-content: flex-end;">
+                                    <button type="button" class="btn btn-secondary" onclick="cerrarModal()">Cancelar</button>
+                                    <button type="submit" class="btn btn-success">Guardar Cambios</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                `;
+                
+                document.body.insertAdjacentHTML('beforeend', modalHTML);
+                
+                document.getElementById('formEditar').addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    await guardarEdicion(id);
+                });
+                
+            } catch (error) {
+                console.error('❌ Error cargando producto para editar:', error);
+                alert('Error al cargar el producto para editar');
+            }
+        }
+
+        async function guardarEdicion(id) {
+            try {
+                const formData = new FormData(document.getElementById('formEditar'));
+                const data = Object.fromEntries(formData);
+                
+                const response = await fetch(`/api/admin/productos/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                alert(result.message);
+                cerrarModal();
+                cargarProductos(currentPage);
+                
+            } catch (error) {
+                console.error('❌ Error guardando edición:', error);
+                alert('Error al guardar los cambios');
+            }
+        }
+
+        function cerrarModal() {
+            const modal = document.getElementById('modalEditar');
+            if (modal) {
+                modal.remove();
+            }
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                cerrarModal();
+            }
+        });
+
+    </script>
+</body>
+</html>
