@@ -1,15 +1,14 @@
 const db = require('./database');
 
-// Crear base de datos si no existe
-db.execute(`CREATE DATABASE IF NOT EXISTS fenix_db`)
-    .then(() => {
-        console.log('✅ Base de datos fenix_db creada/verificada');
+async function inicializarBaseDeDatos() {
+    try {
+        console.log('🗄️ Inicializando base de datos en Aiven...');
         
-        // Usar la base de datos
-        return db.execute(`USE fenix_db`);
-    })
-    .then(() => {
-        // Crear tabla productos
+        // 1. Verificar conexión
+        const [connectionTest] = await db.execute('SELECT 1 as test');
+        console.log('✅ Conexión a Aiven MySQL verificada');
+        
+        // 2. Crear tabla productos en defaultdb
         const createTableSQL = `
             CREATE TABLE IF NOT EXISTS productos (
                 id INT PRIMARY KEY AUTO_INCREMENT,
@@ -32,12 +31,10 @@ db.execute(`CREATE DATABASE IF NOT EXISTS fenix_db`)
             )
         `;
         
-        return db.execute(createTableSQL);
-    })
-    .then(() => {
+        await db.execute(createTableSQL);
         console.log('✅ Tabla productos creada/verificada');
         
-        // Insertar datos de ejemplo
+        // 3. Insertar datos de ejemplo
         const insertDataSQL = `
             INSERT IGNORE INTO productos 
             (folio, cliente, numero_parte, nombre, proyecto, largo, ancho, alto, ect, corrugado, codigo, documento) 
@@ -68,7 +65,7 @@ db.execute(`CREATE DATABASE IF NOT EXISTS fenix_db`)
                 "1914085", "GHSP", "60X36X22.9", "REJILLAS", 
                 "KIT C1UG", 60, 42, 22.9, "ECT-32", "SENCILLO", 
                 "ESP-GH-085", 
-                "https://drive.google.com/open?id=1heKwWY3qIrhiNoBPEyRYqTYDqJ606y6N&usp=drive_fs"
+                "https://drive.google.com/file/d/1heKwWY3qIrhiNoBPEyRYqTYDqJ606y6N/view?usp=sharing"
             ]
         ];
         
@@ -76,14 +73,32 @@ db.execute(`CREATE DATABASE IF NOT EXISTS fenix_db`)
             db.execute(insertDataSQL, producto)
         );
         
-        return Promise.all(promises);
-    })
-    .then(() => {
+        await Promise.all(promises);
         console.log('✅ Datos de ejemplo insertados');
+        
+        // 4. Verificar
+        const [countResult] = await db.execute('SELECT COUNT(*) as total FROM productos');
+        console.log(`📊 Total de productos en BD: ${countResult[0].total}`);
+        
         console.log('🎉 Base de datos inicializada correctamente');
-        process.exit(0);
-    })
-    .catch(err => {
-        console.error('❌ Error inicializando base de datos:', err);
-        process.exit(1);
-    });
+        
+    } catch (err) {
+        console.error('❌ Error inicializando base de datos:', err.message);
+        throw err;
+    }
+}
+
+// Ejecutar si se llama directamente
+if (require.main === module) {
+    inicializarBaseDeDatos()
+        .then(() => {
+            console.log('🚀 Inicialización completada exitosamente');
+            process.exit(0);
+        })
+        .catch(error => {
+            console.error('💥 Error en inicialización:', error);
+            process.exit(1);
+        });
+}
+
+module.exports = inicializarBaseDeDatos;

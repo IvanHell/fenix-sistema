@@ -4,7 +4,8 @@ dentro de este buscar la ruta del programa fenix-sistema\backend
 ejecutar comando "npm install"
 
 para correr el programa "npm start" 
-para visualizarlo localhost:3000
+node server
+para visualizarlo localhost:3001
 
 
 # Iniciar sistema
@@ -17,6 +18,6 @@ node verify-massive.js
 Ctrl + C → npm start
 
 links 
-http://localhost:3000/admin
-http://localhost:3000/
+http://localhost:3001/admin
+http://localhost:3001/
 

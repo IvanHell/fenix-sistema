@@ -1,9 +1,17 @@
 const mysql = require('mysql2');
+require('dotenv').config(); 
 
-console.log('🔧 Iniciando conexión a Aiven MySQL...');
+console.log('🔧 Iniciando conexión a BD...');
 
-// Certificate SSL que te dio Aiven
-const caCertificate = `-----BEGIN CERTIFICATE-----
+// Configuración con variables de entorno
+const dbConfig = {
+    host: process.env.DB_HOST,
+    user: process.env.DB_USER, 
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME,
+    port: process.env.DB_PORT,
+    ssl: {
+        ca: `-----BEGIN CERTIFICATE-----
 MIIEUDCCArigAwIBAgIUYrRDxkjdc4iVaOVGkiRg8G8ljsQwDQYJKoZIhvcNAQEM
 BQAwQDE+MDwGA1UEAww1Njc0MjAzNjItZGFmMi00ZmQxLWJiNTEtYWYwOWMxYmVh
 Nzk3IEdFTiAxIFByb2plY3QgQ0EwHhcNMjUxMTI2MjAyNzMxWhcNMzUxMTI0MjAy
@@ -28,34 +36,24 @@ L6h/OA+PJx69BpGiBqCQjK6UvPluLlq31zbY0CvF7PVvRhnmOGO3P1VXZdxKbvVH
 /IJm9E6aG2oCR85SRBeXFvODj2XtaNlQM5t4mKAYcQnK04RVnMiRrdTZ9VE/1Rwy
 riA6qzfjVQci7EAbgJ8zQjQdExK9vhNF7YGY2gUxudOGBkQl7fm+wI/nju6VA0Fq
 CVRNeA==
------END CERTIFICATE-----`;
-
-const dbConfig = {
-    host: process.env.DB_HOST,
-    user: process.env.DB_USER, 
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
-    port: process.env.DB_PORT,
-    ssl: {
-        ca: caCertificate,
-        rejectUnauthorized: true
+-----END CERTIFICATE-----
+`,
+        rejectUnauthorized: false
     },
     connectTimeout: 60000
 };
 
-console.log('📋 Configuración Aiven con SSL:');
+console.log('📋 Configuración BD:');
 console.log('- Host:', dbConfig.host);
 console.log('- Database:', dbConfig.database);
-console.log('- SSL:', '✅ ACTIVADO con certificado');
 
 const pool = mysql.createPool(dbConfig);
 
 pool.getConnection((err, connection) => {
     if (err) {
-        console.error('❌ ERROR Aiven MySQL:', err.message);
-        console.error('🔍 Código:', err.code);
+        console.error('❌ ERROR MySQL:', err.message);
     } else {
-        console.log('✅ CONEXIÓN EXITOSA a Aiven MySQL con SSL');
+        console.log('✅ CONEXIÓN EXITOSA a MySQL');
         connection.release();
     }
 });
